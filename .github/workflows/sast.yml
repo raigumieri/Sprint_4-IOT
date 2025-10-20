@@ -1,0 +1,28 @@
+name: SAST - Semgrep Scan
+
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Instalar Semgrep
+        run: |
+          pip install semgrep
+
+      - name: Rodar análise SAST
+        run: |
+          semgrep --config auto --json > semgrep-report.json
+
+      - name: Publicar relatório
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: semgrep-report.json
+

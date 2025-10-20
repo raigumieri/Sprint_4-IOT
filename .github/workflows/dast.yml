@@ -1,0 +1,46 @@
+name: DAST Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  dast:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout do código
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Instalar Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      # 3. Instalar JSON Server
+      - name: Install JSON Server
+        run: npm install -g json-server
+
+      # 4. Subir a API fake
+      - name: Start fake API
+        run: |
+          npx json-server --watch db.json --port 3000 &
+          sleep 5
+
+      # 5. Instalar Nikto
+      - name: Install Nikto
+        run: sudo apt-get update && sudo apt-get install -y nikto
+
+      # 6. Rodar o scan Nikto na API fake
+      - name: Run Nikto Scan
+        run: nikto -h http://localhost:3000 -output dast-report.txt
+
+      # 7. Salvar o relatório como artifact
+      - name: Upload DAST report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dast-report
+          path: dast-report.txt

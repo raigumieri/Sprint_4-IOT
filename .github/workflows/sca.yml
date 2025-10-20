@@ -1,0 +1,50 @@
+name: SCA - Análise de Componentes de Terceiros
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  snyk-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout do código
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Setup Node.js (necessário para projetos React/React Native)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # 3️⃣ Instalar dependências do projeto
+      - name: Install dependencies
+        run: npm install
+
+      # 4️⃣ Instalar Snyk CLI
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      # 5️⃣ Rodar análise de vulnerabilidades usando token direto
+      - name: Run Snyk test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --all-projects || true
+
+      # 6️⃣ Gerar relatório em JSON
+      - name: Generate Snyk report
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --all-projects --json > snyk-report.json || true
+
+      # 7️⃣ Fazer upload do relatório como artefato
+      - name: Upload Snyk report
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-report
+          path: snyk-report.json
+
